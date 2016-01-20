@@ -6,6 +6,25 @@ using System.Text;
 using System.Threading.Tasks;
 using CsvHelper;
 
+// This program takes a CSV file in the shape of an SQL dump and explodes the forward slashes
+// into their own rows. So for example a CSV file looking like:
+// AAA,BBB,LLL/MMM/NNN,CCC
+// Would turn into a CSV file looking like:
+// AAA,BBB,LLL,CCC
+// ,,MMM,
+// ,,NNN,
+// And when you input that into excel:
+// [AAA][BBB][LLL][CCC]
+// [   ][   ][MMM][   ]
+// [   ][   ][NNN][   ]
+//
+// It can also bring down a column with each exploded forward slash
+// Say we want to bring down column 2 (array position 1),
+// after we're done in excel it would look like:
+// [AAA][BBB][LLL][CCC]
+// [   ][BBB][MMM][   ]
+// [   ][BBB][NNN][   ]
+
 namespace CSV_Converter
 {
     class Program
@@ -53,7 +72,7 @@ namespace CSV_Converter
             }
 
             // Specifically bring the first value of the specified columns down starting from 0
-            // Probably shouldn't do this with columns that may be backslashed
+            // Probably shouldn't do this with columns that may be forward slashed
             // But what do I know, I'm not the boss of you
             List<int> bringTheseColumnsDown = new List<int>();
             bringTheseColumnsDown.Add(15);
@@ -86,20 +105,24 @@ namespace CSV_Converter
                 // Now we need to add the new rows
                 for (int newRow = 0; newRow < amountOfNewRows; newRow++)
                 {
+                    // Make sure we get the same amount of columns
                     for (int newColumn = 0; newColumn < totalColumns; newColumn++)
                     {
-                        if (newLinesInColumn.ElementAt(newColumn).Item2 == newColumn)
+                        // If there is something in the column to insert, insert it
+                        if (newLinesInColumn.ElementAt(newColumn).Item1.Length > newRow)
                         {
-                            if (newLinesInColumn.ElementAt(newColumn).Item1.Length > newRow)
-                            {
-                                newLine.Append(newLinesInColumn.ElementAt(newColumn).Item1[newRow]);
-                            }
-                            // Bring down any specific columns
-                            else if (bringTheseColumnsDown.Contains(newColumn))
-                            {
-                                newLine.Append(newLinesInColumn.ElementAt(newColumn).Item1[0]);
-                            }
+                            // Add the exploded data into the new column
+                            newLine.Append(newLinesInColumn.ElementAt(newColumn).Item1[newRow]);
                         }
+                        // If there is no exploded data to insert but we want to bring this column down
+                        else if (bringTheseColumnsDown.Contains(newColumn))
+                        {
+                            // Insert the first value into the column, which is always
+                            // the same whether it was exploded or not
+                            newLine.Append(newLinesInColumn.ElementAt(newColumn).Item1[0]);
+                        }
+                        // If it's the last entry on the line, just put newline
+                        // Otherwise, whether we put something on this line or not, put a comma
                         newLine.Append(newColumn == totalColumns - 1 ? "\n" : ",");
                     }
                 }
