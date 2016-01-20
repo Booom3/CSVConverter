@@ -84,9 +84,9 @@ namespace CSV_Converter
             // First read row by row
             for (int row = 0; row < oldFile.Count; row++)
             {
-                // The first value is an array of the split string
-                // The second value is on which column the split belongs to
-                var newLinesInColumn = new List<Tuple<string[], int>>();
+                // We explode each string into an array, and we put this in a list
+                // where each entry in the list is one column
+                var newLinesInColumn = new List<string[]>();
                 // How many new rows we need to insert
                 int amountOfNewRows = 0;
                 // Loop through all the columns on the row,
@@ -99,7 +99,7 @@ namespace CSV_Converter
                     if (amountOfNewRows < splitColumn.Length)
                         amountOfNewRows = splitColumn.Length;
 
-                    newLinesInColumn.Add(new Tuple<string[], int>(splitColumn, column));
+                    newLinesInColumn.Add(splitColumn);
                 }
                 var newLine = new StringBuilder();
                 // Now we need to add the new rows
@@ -109,17 +109,17 @@ namespace CSV_Converter
                     for (int newColumn = 0; newColumn < totalColumns; newColumn++)
                     {
                         // If there is something in the column to insert, insert it
-                        if (newLinesInColumn.ElementAt(newColumn).Item1.Length > newRow)
+                        if (newLinesInColumn[newColumn].Length > newRow)
                         {
                             // Add the exploded data into the new column
-                            newLine.Append(newLinesInColumn.ElementAt(newColumn).Item1[newRow]);
+                            newLine.Append(newLinesInColumn[newColumn][newRow]);
                         }
                         // If there is no exploded data to insert but we want to bring this column down
                         else if (bringTheseColumnsDown.Contains(newColumn))
                         {
                             // Insert the first value into the column, which is always
                             // the same whether it was exploded or not
-                            newLine.Append(newLinesInColumn.ElementAt(newColumn).Item1[0]);
+                            newLine.Append(newLinesInColumn[newColumn][0]);
                         }
                         // If it's the last entry on the line, just put newline
                         // Otherwise, whether we put something on this line or not, put a comma
